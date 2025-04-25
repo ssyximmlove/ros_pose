@@ -177,7 +177,7 @@ class PoseNode(Node):
 		yaw_str = f"{'+' if yaw >= 0 else '-'}{int(abs(yaw)):03d}.{int(abs(yaw * 100) % 100):02d}"
 
 		# Construct the formatted message string
-		data = f"@:{pitch_str},{roll_str},{yaw_str} #:{x_cm:04d},{y_cm:04d}\n"
+		data = f"@:{pitch_str},{roll_str},{yaw_str},{x_cm:04d},{y_cm:04d}#"
 
 		return data
 
