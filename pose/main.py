@@ -5,6 +5,7 @@ from geometry_msgs.msg import Vector3
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from serial import Serial
+from std_srvs.srv import Trigger
 
 
 class PoseNode(Node):
@@ -38,6 +39,12 @@ class PoseNode(Node):
 			10
 		)
 
+		self_action_service = self.create_service(
+			Trigger,
+			'/action',
+			self.action_callback
+		)
+
 		# Add class variables to store distances
 		self.distance_0 = 0.0  # 0 degrees
 		self.distance_90 = 0.0  # 90 degrees
@@ -51,6 +58,21 @@ class PoseNode(Node):
 		# Publisher
 		# Create a publisher
 		self.timer = self.create_timer(0.1, self.timer_callback)  # Message Frequency: 10Hz
+
+
+	def action_callback(self, request, response):
+		"""
+		Callback function for the action service
+		:param request: Request object
+		:param response: Response object
+		:return:
+		"""
+		self.get_logger().info('Action service called')
+		action_msg = f'!Action?'
+		self.serial.write(action_msg.encode('utf-8'))  # Send action message to STM32
+		response.success = True
+		response.message = 'Action executed successfully'
+		return response
 
 	def timer_callback(self):
 		"""
