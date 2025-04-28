@@ -39,7 +39,7 @@ class PoseNode(Node):
 			10
 		)
 
-		self_action_service = self.create_service(
+		self.action_service = self.create_service(
 			Trigger,
 			'/action',
 			self.action_callback
@@ -55,10 +55,11 @@ class PoseNode(Node):
 		self.pitch = 0.0
 		self.yaw = 0.0
 
+		self.send_pose_data = False
+
 		# Publisher
 		# Create a publisher
 		self.timer = self.create_timer(0.1, self.timer_callback)  # Message Frequency: 10Hz
-
 
 	def action_callback(self, request, response):
 		"""
@@ -70,6 +71,11 @@ class PoseNode(Node):
 		self.get_logger().info('Action service called')
 		action_msg = f'!Action?'
 		self.serial.write(action_msg.encode('utf-8'))  # Send action message to STM32
+
+		# 设置标志位，开始发送pose数据
+		self.send_pose_data = True
+		self.get_logger().info('开始以10Hz频率发送pose数据')
+
 		response.success = True
 		response.message = 'Action executed successfully'
 		return response
@@ -78,16 +84,18 @@ class PoseNode(Node):
 		"""
 		Timer callback to send position data at 10Hz
 		"""
-		# Use distance_180 as Y coordinate and distance_270 as X coordinate
-		y_coord = self.distance_180 if hasattr(self, 'distance_180') else 0.0
-		x_coord = self.distance_270 if hasattr(self, 'distance_270') else 0.0
+		# Use the send_pose_data flag to determine if data should be sent
+		if self.send_pose_data:
+			# Use distance_180 as Y coordinate and distance_270 as X coordinate
+			y_coord = self.distance_180 if hasattr(self, 'distance_180') else 0.0
+			x_coord = self.distance_270 if hasattr(self, 'distance_270') else 0.0
 
-		# Build the formatted message
-		formatted_data = self.pose_msg_builder(
-			self.pitch, self.roll, self.yaw, x_coord, y_coord)
+			# Build the formatted message
+			formatted_data = self.pose_msg_builder(
+				self.pitch, self.roll, self.yaw, x_coord, y_coord)
 
-		# Send the data
-		self.pose_sender(formatted_data)
+			# Send the data
+			self.pose_sender(formatted_data)
 
 	def angles_callback(self, msg):
 		"""
